@@ -5,7 +5,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   RequestTimeoutException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import axios from 'axios';
@@ -29,9 +28,14 @@ import { isUUID } from 'class-validator';
 
 @Injectable()
 export class CreateOrderUseCase {
+  private readonly booksServiceUrl: string;
+
   constructor(
     @Inject(ORDER_REPOSITORY) private readonly orderRepository: OrderRepository,
-  ) {}
+  ) {
+    this.booksServiceUrl =
+      process.env.BOOKS_SERVICE_URL || 'http://books-service:3000';
+  }
 
   async execute(params: { bookId: string; quantity: number }): Promise<Order> {
     try {
@@ -62,7 +66,7 @@ export class CreateOrderUseCase {
   private async fetchBook(bookId: string): Promise<BookResponse> {
     try {
       const response = await axios.get<BookResponse>(
-        `http://localhost:3000/books/${bookId}`,
+        `${this.booksServiceUrl}/books/${bookId}`,
       );
       if (!response?.data) {
         throw new BookNotFoundError(bookId);
