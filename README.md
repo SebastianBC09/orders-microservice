@@ -1,123 +1,216 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 📦 Orders API — Microservicio de Pedidos
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Una API REST minimalista para gestionar órdenes de libros, creada con **NestJS**, **Prisma**, y siguiendo arquitectura **Hexagonal + Clean + DDD**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 📑 Tabla de Contenidos
 
-Microservicio de órdenes desarrollado con NestJS, Prisma y arquitectura hexagonal (Clean Architecture). Este servicio se encarga de la creación y listado de órdenes, comunicándose con un servicio externo de libros.
+- [✨ Descripción](#-descripción)
+- [🏗️ Arquitectura](#️-arquitectura)
+  - [Estructura del Proyecto](#estructura-del-proyecto)
+  - [Diagrama de Alto Nivel](#diagrama-de-alto-nivel)
+- [🧰 Tecnologías](#-tecnologías)
+- [⚙️ Requisitos Previos](#️-requisitos-previos)
+- [🚀 Instalación & Ejecución](#-instalación--ejecución)
+  - [🐳 Docker](#-docker)
+- [📝 Endpoints](#-endpoints)
+  - [Ejemplos con `curl`](#ejemplos-con-curl)
+- [🛠️ Decisiones Técnicas](#F-decisiones-técnicas)
+- [🔒 Buenas Prácticas REST](#-buenas-prácticas-rest)
+- [👨‍💻 Autor](#-autor)
+- [📄 Licencia](#-licencia)
 
-## Características
+---
 
-- 🏗️ **Arquitectura Hexagonal**: Separación clara entre dominio, aplicación e infraestructura
-- 🔒 **Type Safety**: Tipos seguros para comunicación entre microservicios
-- 🛠️ **Prisma ORM**: Para el manejo de la base de datos PostgreSQL
-- 🌐 **HTTP Client**: Servicio dedicado para comunicación con servicios externos
-- ⚡ **NestJS**: Framework moderno y escalable para Node.js
+## ✨ Descripción
 
-## Configuración
+Este microservicio permite:
 
-### Variables de Entorno
+- Crear órdenes
+- Listar todas las órdenes
 
-Crea un archivo `.env` con las siguientes variables:
+Implementado siguiendo Clean Architecture y DDD, con separación clara entre capas y repositorios desacoplados.
 
-```bash
-# Database Configuration
-DATABASE_URL="postgresql://username:password@localhost:5432/orders_db?schema=public"
+---
 
-# External Services
-BOOKS_SERVICE_URL="http://localhost:3000"
+## 🏗️ Arquitectura
 
-# Application Configuration
-PORT=3001
+### Estructura del Proyecto
+
+```
+src/
+├── domain/               # Entidades y repositorios (contratos)
+├── application/          # Casos de uso (use cases)
+├── infrastructure/       # Prisma, repositorios concretos
+│   └── prisma/           # PrismaService y repos impl.
+├── interfaces/           # Controladores y DTOs HTTP
+├── modules/              # Módulos Nest (e.g. BookModule)
+├── main.ts               # Bootstrap + Swagger + CORS
+└── app.module.ts         # Módulo raiz
+prisma/
+└── schema.prisma         # Esquema DB
+└── .env                  # Variables de entorno (Conexion a DB local)
 ```
 
-## Project setup
+### Diagrama de Alto Nivel
 
-```bash
-$ npm install
+```mermaid
+flowchart TB
+  subgraph HTTP["HTTP Layer (NestJS)"]
+    C[Client] --> Controller[OrderController]
+    Controller --> UseCases[Create Order, List All Orders]
+  end
+
+  subgraph App["Application Layer"]
+    UseCases --> RepoInterface[OrderRepository Interface]
+  end
+
+  subgraph Infra["Infrastructure"]
+    RepoInterface --> PrismaRepo[PrismaOrderRepository]
+    PrismaRepo --> Prisma[PrismaService]
+    Prisma --> DB[(PostgreSQL)]
+  end
 ```
 
-## Compile and run the project
+---
+
+## 🧰 Tecnologías
+
+| Categoría         | Tecnología                  |
+| ----------------- | --------------------------- |
+| Framework         | NestJS                      |
+| Lenguaje          | TypeScript                  |
+| ORM               | Prisma                      |
+| DB                | PostgreSQL                  |
+| Documentación     | Swagger (`@nestjs/swagger`) |
+| CORS & Validación | `ValidationPipe`, CORS      |
+| UUID Generation   | `uuid`                      |
+| Axios HTTP Client | `axios`                     |
+
+---
+
+## ⚙️ Requisitos Previos
+
+- Node.js v22
+- npm o yarn
+- PostgreSQL 17
+- Docker
+- Postman (opcional)
+
+---
+
+## 🚀 Instalación & Ejecución
+
+1. Clona el repositorio y entra al directorio:
+
+   ```bash
+   git clone <repo-url>
+   cd books-service
+   ```
+
+2. Instala dependencias:
+
+   ```bash
+   npm install
+   ```
+
+3. Crea tu `.env` basado en `.env.example`:
+
+   ```env
+   DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB?schema=orders"
+   PORT=3000
+   ```
+
+4. Inicializa Prisma:
+
+   ```bash
+   npx prisma migrate dev --name init
+   "Si no se generan los tipos, ejecutar"
+   npx prisma generate
+   ```
+
+5. Levanta el servidor:
+
+   ```bash
+   npm run start:dev
+   ```
+
+6. Accede a Swagger en: `http://localhost:3001/api/docs`
+
+### 🐳 Docker
+
+Si por el contrario quieres ejecutar todos los servicios en contenedores, puedes usar Docker.
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker-compose build
+docker-compose up -d
 ```
 
-## Run tests
+---
+
+## 📝 Endpoints
+
+| Método | Ruta      | Descripción             | Estado HTTP                                                               |
+| ------ | --------- | ----------------------- | ------------------------------------------------------------------------- |
+| GET    | `/orders` | Lista todas las órdenes | 200 OK / 404 Not Found / 500 Internal Server Error                        |
+| POST   | `/orders` | Crea una nueva orden    | 201 Created / 400 Bad Request / 404 Not Found / 500 Internal Server Error |
+
+### Ejemplos con `curl`
+
+#### Crear una orden
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+curl -X POST http://localhost:3001/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bookId": "uuid-del-libro",
+    "quantity": 2,
+  }'
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+#### Obtener todas las órdenes
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+curl -X GET http://localhost:3001/orders \
+  -H 'accept: */*'
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🛠️ Decisiones Técnicas
 
-## Resources
+- **UUID v4** como ID, generada en dominios (via `uuid` lib)
+- **Factory Methods**:
+  - `Order.create()` para nuevo
+  - `Order.restore()` para rehidratar desde DB
+- **Token de inyección**: usar `Symbol('ORDER_REPOSITORY')` para desacoplar interfaz y repo
+- **PrismaService global** para compartir conexión en varios módulos
+- **Swagger + ValidationPipe** para inputs claros y seguros
+- **Axios** para llamadas HTTP a otros microservicios (e.g., Books Service)
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🔒 Buenas Prácticas REST
 
-## Support
+- DTOs validados y transformados automáticamente
+- CORS habilitado globalmente
+- Códigos HTTP adecuados (`201`, `400`, `404`)
+- Arquitectura desacoplada, fácil de testear y escalar
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## 👨‍💻 Autor
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Sebastian Ballen C** - _FullStack Developer_
 
-## License
+- LinkedIn: [Sebastian B.](https://www.linkedin.com/in/sebastianballencastaneda-softwaredeveloper)
+- Email: sebastian.ballenc@gmail.com
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT - vea el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+⭐️ **Si te resulta útil este proyecto, ¡no olvides darle una estrella en GitHub!** ⭐️
