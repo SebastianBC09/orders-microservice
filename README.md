@@ -7,7 +7,7 @@ Una API REST minimalista para gestionar órdenes de libros, creada con **NestJS*
 ## 📑 Tabla de Contenidos
 
 - [✨ Descripción](#-descripción)
-- [🏗️ Arquitectura](#️-arquitectura)
+- [🏗️ Arquitectura](#-arquitectura)
   - [Estructura del Proyecto](#estructura-del-proyecto)
   - [Diagrama de Alto Nivel](#diagrama-de-alto-nivel)
 - [🧰 Tecnologías](#-tecnologías)
